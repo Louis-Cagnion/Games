@@ -60,6 +60,7 @@ let collectiblePlacementMode = false;
 let currentCollectible = null;
 const lieuxGeneriques = ["Lacs", "Rivières", "Mers", "Foyer", "Bord de l'eau", "Au sommet de la tête de Blanc", "Attracteur d'insectes"];
 let draggingCollectible = null;
+let suppressionCollectibleMode = false;
 
 // =========================
 // 🗺️ ZONES ET SOUS-ZONES
@@ -147,6 +148,36 @@ function createCollectibleMarker(x, y, type, collectibleName, spawnIndex, color 
         draggingCollectible = el;
         e.preventDefault();
         e.stopPropagation();
+    };
+    el.onclick = function(e) {
+    if (mode !== "admin") return;
+    if (!suppressionCollectibleMode) return;
+    e.stopPropagation();
+
+    if (!confirm("Supprimer cette position ?")) return;
+
+    const name = el.dataset.collectibleName;
+    const idx = parseInt(el.dataset.spawnIndex);
+
+    const collectible = collectibles.find(c => c.name === name);
+        if (collectible) {
+            collectible.spawns.splice(idx, 1);
+
+            // Mettre à jour les indices des marqueurs suivants
+            document.querySelectorAll(".collectible-marker").forEach(m => {
+                if (m.dataset.collectibleName === name) {
+                    const mIdx = parseInt(m.dataset.spawnIndex);
+                    if (mIdx > idx) {
+                        m.dataset.spawnIndex = mIdx - 1;
+                    }
+                }
+            });
+
+            localStorage.setItem("collectibles", JSON.stringify(collectibles));
+            afficherLegende();
+        }
+
+        el.remove();
     };
 
     inner.appendChild(el);
@@ -984,5 +1015,19 @@ function appliquerFiltres() {
     // Éléments dans le panneau info si un lieu est sélectionné
     if (selectedPlace) {
         afficherElementsLieu(selectedPlace);
+    }
+}
+
+function toggleSuppressionCollectible() {
+    suppressionCollectibleMode = !suppressionCollectibleMode;
+    const btn = document.getElementById("btnSuppressionCollectible");
+    if (suppressionCollectibleMode) {
+        btn.style.background = "#c0392b";
+        btn.textContent = "🗑️ Mode suppression actif";
+        container.style.cursor = "crosshair";
+    } else {
+        btn.style.background = "";
+        btn.textContent = "🗑️ Supprimer position";
+        container.style.cursor = "crosshair";
     }
 }
