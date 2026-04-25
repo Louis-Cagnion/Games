@@ -1031,3 +1031,59 @@ function toggleSuppressionCollectible() {
         container.style.cursor = "crosshair";
     }
 }
+
+function openSuppressionPanel() {
+    ["panelPoisson", "panelInsecte", "panelOiseau", "panelCollectible", "panelSuppression"].forEach(id => {
+        document.getElementById(id).classList.add("hidden");
+    });
+    document.getElementById("panelSuppression").classList.remove("hidden");
+    updateSuppressionList();
+}
+
+function updateSuppressionList() {
+    const type = document.getElementById("suppressionType").value;
+    const select = document.getElementById("suppressionElement");
+    select.innerHTML = "";
+
+    let data = type === "poisson" ? poissons
+        : type === "insecte" ? insectes
+        : type === "oiseau" ? oiseaux
+        : collectibles;
+
+    [...data].sort((a, b) => a.name.localeCompare(b.name, "fr")).forEach(el => {
+        const opt = document.createElement("option");
+        opt.value = el.name;
+        opt.textContent = el.name;
+        select.appendChild(opt);
+    });
+}
+
+function supprimerElement() {
+    const type = document.getElementById("suppressionType").value;
+    const nom = document.getElementById("suppressionElement").value;
+    if (!nom) return;
+
+    if (!confirm(`Supprimer "${nom}" ?`)) return;
+
+    if (type === "poisson") {
+        poissons = poissons.filter(p => p.name !== nom);
+        localStorage.setItem("poissons", JSON.stringify(poissons));
+    } else if (type === "insecte") {
+        insectes = insectes.filter(i => i.name !== nom);
+        localStorage.setItem("insectes", JSON.stringify(insectes));
+    } else if (type === "oiseau") {
+        oiseaux = oiseaux.filter(o => o.name !== nom);
+        localStorage.setItem("oiseaux", JSON.stringify(oiseaux));
+    } else if (type === "collectible") {
+        // Supprimer aussi les marqueurs sur la carte
+        document.querySelectorAll(".collectible-marker").forEach(el => {
+            if (el.dataset.collectibleName === nom) el.remove();
+        });
+        collectibles = collectibles.filter(c => c.name !== nom);
+        localStorage.setItem("collectibles", JSON.stringify(collectibles));
+        afficherLegende();
+    }
+
+    updateSuppressionList();
+    alert(`"${nom}" supprimé !`);
+}

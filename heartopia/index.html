@@ -19,12 +19,30 @@
     <div id="legendeList"></div>
 </div>
 
+<!-- 🗑️ PANNEAU SUPPRESSION -->
+<div id="panelSuppression" class="hidden element-panel">
+    <h3>🗑️ Supprimer un élément</h3>
+    <label>Type :
+        <select id="suppressionType" onchange="updateSuppressionList()">
+            <option value="poisson">🐟 Poisson</option>
+            <option value="insecte">🐛 Insecte</option>
+            <option value="oiseau">🪶 Oiseau</option>
+            <option value="collectible">🍄 Collectible</option>
+        </select>
+    </label>
+    <label>Élément :
+        <select id="suppressionElement"></select>
+    </label>
+    <button onclick="supprimerElement()">🗑️ Supprimer</button>
+    <button onclick="closePanel('panelSuppression')">✖ Fermer</button>
+</div>
 <div id="adminPanel" class="hidden">
     <button onclick="openPanel('panelPoisson')">🐟 Poisson</button>
     <button onclick="openPanel('panelInsecte')">🐛 Insecte</button>
     <button onclick="openPanel('panelOiseau')">🪶 Oiseau</button>
     <button onclick="openCollectiblePanel()">🍄 Collectible</button>
     <button id="btnSuppressionCollectible" onclick="toggleSuppressionCollectible()">🗑️ Supprimer position collectible</button>
+    <button onclick="openSuppressionPanel()">🗑️ Supprimer élément</button>
     <button onclick="exportTout()">📤 Tout exporter</button>
     <button onclick="triggerImportElements()">📥 Importer éléments</button>
     <input type="file" id="importElementsFile" class="hidden" multiple onchange="importElements(event)">
