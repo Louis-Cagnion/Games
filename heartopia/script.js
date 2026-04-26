@@ -2,10 +2,31 @@ let places = JSON.parse(localStorage.getItem("places")) || [];
 let selectedPlace = null;
 let draggingPlace = null;
 let mode = "user";
+let zoom = 1;
+let panX = 0;
+let panY = 0;
+let isPanning = false;
+let panStartX = 0;
+let panStartY = 0;
 
 const inner = document.getElementById("map-inner");
 const container = document.getElementById("map-container");
 container.classList.add("add-mode");
+
+// =========================
+// 🐟 ELEMENTS
+// =========================
+
+let poissons = JSON.parse(localStorage.getItem("poissons")) || [];
+let insectes = JSON.parse(localStorage.getItem("insectes")) || [];
+let oiseaux = JSON.parse(localStorage.getItem("oiseaux")) || [];
+let collectibles = JSON.parse(localStorage.getItem("collectibles")) || [];
+
+let collectiblePlacementMode = false;
+let currentCollectible = null;
+const lieuxGeneriques = ["Lacs", "Rivières", "Mers", "Foyer", "Bord de l'eau", "Au sommet de la tête de Blanc", "Attracteur d'insectes"];
+let draggingCollectible = null;
+let suppressionCollectibleMode = false;
 
 // =========================
 // 🔐 MODE MANAGEMENT
@@ -20,15 +41,27 @@ function setMode(newMode) {
         }
         mode = "admin";
         document.getElementById("adminPanel").classList.remove("hidden");
+        document.getElementById("hobbyPanel").classList.add("hidden");
+        document.getElementById("btnLangue").style.marginBottom = "0";
         container.classList.add("editor-mode");
         container.style.cursor = "crosshair";
+        selectedPlace = null;
+        document.getElementById("placeTitle").textContent = langue === "fr" ? "Aucun lieu sélectionné" : "No location selected";
+        document.getElementById("elementsPanel").classList.add("hidden");
+        document.getElementById("btnSpeciaux").classList.add("hidden");
         updateModeButtons();
         return;
     }
     mode = "user";
     document.getElementById("adminPanel").classList.add("hidden");
+    document.getElementById("hobbyPanel").classList.remove("hidden");
+    document.getElementById("btnLangue").style.marginBottom = "";
     container.classList.remove("editor-mode");
     container.style.cursor = "default";
+    selectedPlace = null;
+    document.getElementById("placeTitle").textContent = langue === "fr" ? "Aucun lieu sélectionné" : "No location selected";
+    document.getElementById("elementsPanel").classList.add("hidden");
+    document.getElementById("btnSpeciaux").classList.add("hidden");
     updateModeButtons();
 }
 
@@ -48,19 +81,63 @@ function savePlaces() {
 }
 
 // =========================
-// 🐟 ELEMENTS
+// 🌍 LANGUE
 // =========================
 
-let poissons = JSON.parse(localStorage.getItem("poissons")) || [];
-let insectes = JSON.parse(localStorage.getItem("insectes")) || [];
-let oiseaux = JSON.parse(localStorage.getItem("oiseaux")) || [];
-let collectibles = JSON.parse(localStorage.getItem("collectibles")) || [];
+let langue = "fr";
 
-let collectiblePlacementMode = false;
-let currentCollectible = null;
-const lieuxGeneriques = ["Lacs", "Rivières", "Mers", "Foyer", "Bord de l'eau", "Au sommet de la tête de Blanc", "Attracteur d'insectes"];
-let draggingCollectible = null;
-let suppressionCollectibleMode = false;
+function toggleLangue() {
+    langue = langue === "fr" ? "en" : "fr";
+    document.getElementById("btnLangue").textContent = langue === "fr" ? "🇫🇷 FR" : "🇬🇧 EN";
+    // Mettre à jour le titre du panneau
+    if (!selectedPlace) {
+        document.getElementById("placeTitle").textContent = langue === "fr" ? "Aucun lieu sélectionné" : "No location selected";
+    }
+    rafraichirAffichage();
+}
+
+function getNom(element) {
+    if (!element || !element.name) return "";
+    if (Array.isArray(element.name)) {
+        return langue === "fr" ? element.name[0] : element.name[1];
+    }
+    return element.name;
+}
+
+function getLieu(element) {
+    if (!element || !element.lieu) return "";
+    if (Array.isArray(element.lieu)) {
+        return langue === "fr" ? element.lieu[0] : element.lieu[1];
+    }
+    return element.lieu;
+}
+
+function rafraichirAffichage() {
+    // Mettre à jour les labels sur la carte
+    document.querySelectorAll(".place-marker").forEach(el => {
+        const name = el.dataset.name;
+        const place = places.find(p => Array.isArray(p.name) ? p.name[0] === name : p.name === name);
+        if (place) {
+            const label = el.querySelector(".place-label");
+            if (label) label.textContent = formatPlaceName(getNom(place));
+        }
+    });
+
+    // Mettre à jour la légende collectibles
+    afficherLegende();
+
+    // Mettre à jour le panneau info si un lieu est sélectionné
+    if (selectedPlace) {
+        afficherElementsLieu(selectedPlace);
+    }
+
+    // Mettre à jour le panneau spéciaux si ouvert
+    const panelSpeciaux = document.getElementById("panelSpeciaux");
+    if (!panelSpeciaux.classList.contains("hidden")) {
+        toggleSpeciaux();
+        toggleSpeciaux();
+    }
+}
 
 // =========================
 // 🗺️ ZONES ET SOUS-ZONES
@@ -107,22 +184,21 @@ function getLieuxPourRecherche(nomLieu) {
 }
 
 function getElementsPourLieu(nomLieu) {
-    // Trouve la zone niv1 parente si le lieu est une sous-zone
     const estZoneNiv1 = zoneParent.hasOwnProperty(nomLieu);
     const sousZones = estZoneNiv1 ? zoneParent[nomLieu] : [];
 
-    // Tous les lieux à rechercher
     const tousLesLieux = new Set(getLieuxPourRecherche(nomLieu));
     sousZones.forEach(sz => getLieuxPourRecherche(sz).forEach(l => tousLesLieux.add(l)));
 
-    // Cherche dans poissons, insectes, oiseaux
     const tous = [...poissons, ...insectes, ...oiseaux];
     const resultats = {};
 
     tous.forEach(el => {
-        if (tousLesLieux.has(el.lieu)) {
-            if (!resultats[el.lieu]) resultats[el.lieu] = [];
-            resultats[el.lieu].push(el.name);
+        const lieuFr = Array.isArray(el.lieu) ? el.lieu[0] : el.lieu;
+        if (tousLesLieux.has(lieuFr)) {
+            const nameFr = Array.isArray(el.name) ? el.name[0] : el.name;
+            if (!resultats[lieuFr]) resultats[lieuFr] = [];
+            resultats[lieuFr].push(nameFr);
         }
     });
 
@@ -294,7 +370,7 @@ function createPlaceMarker(name, x, y, level = 1) {
 
     const label = document.createElement("div");
     label.className = "place-label";
-    label.textContent = formatPlaceName(name);
+    label.textContent = formatPlaceName(Array.isArray(name) ? name[0] : name);
     el.appendChild(label);
 
     label.ondblclick = function(e) {
@@ -363,10 +439,11 @@ function createPlaceMarker(name, x, y, level = 1) {
 // =========================
 
 places.forEach(p => {
+    const nameFr = Array.isArray(p.name) ? p.name[0] : p.name;
     const exists = [...document.querySelectorAll(".place-marker")]
-        .some(el => el.dataset.name === p.name);
+        .some(el => el.dataset.name === nameFr);
     if (!exists) {
-        createPlaceMarker(p.name, p.x, p.y, p.level || 1);
+        createPlaceMarker(nameFr, p.x, p.y, p.level || 1);
     }
 });
 collectibles.forEach(c => {
@@ -411,7 +488,10 @@ function importPlacesFromJSON(event) {
         places = JSON.parse(e.target.result);
         savePlaces();
         document.querySelectorAll(".place-marker").forEach(el => el.remove());
-        places.forEach(p => createPlaceMarker(p.name, p.x, p.y, p.level || 1));
+        places.forEach(p => {
+            const nameFr = Array.isArray(p.name) ? p.name[0] : p.name;
+            createPlaceMarker(nameFr, p.x, p.y, p.level || 1);
+        });
     };
     reader.readAsText(file);
 }
@@ -426,6 +506,7 @@ function triggerImport() {
 // =========================
 
 function formatPlaceName(name) {
+    if (Array.isArray(name)) name = name[0];
     const max = 19;
     const words = name.split(" ");
     let lines = [];
@@ -488,13 +569,6 @@ function clampLabels() {
 // =========================
 // 🔍 ZOOM + PAN
 // =========================
-
-let zoom = 1;
-let panX = 0;
-let panY = 0;
-let isPanning = false;
-let panStartX = 0;
-let panStartY = 0;
 
 function applyTransform() {
     const minPanX = -(900 * zoom - 900);
@@ -609,30 +683,38 @@ function openPanel(panelId) {
         sep.textContent = "──────────";
         select.appendChild(sep);
 
-        let lieux = [...places].sort((a, b) => a.name.localeCompare(b.name, "fr"));
+        let lieux = [...places].sort((a, b) => {
+            const nameA = Array.isArray(a.name) ? a.name[0] : a.name;
+            const nameB = Array.isArray(b.name) ? b.name[0] : b.name;
+            return nameA.localeCompare(nameB, "fr");
+        });
 
         // Filtre pour les poissons
         if (panelId === "panelPoisson") {
             const mots = ["lac", "mer", "rivière", "fleuve"];
-            lieux = lieux.filter(p =>
-                mots.some(mot => new RegExp(`\\b${mot}`, "i").test(p.name))
-            );
+            lieux = lieux.filter(p => {
+                const n = Array.isArray(p.name) ? p.name[0] : p.name;
+                return mots.some(mot => new RegExp(`\\b${mot}`, "i").test(n));
+            });
         } else if (panelId === "panelOiseau") {
             const motsExclus = ["insectes", "Événement : pêche"];
-            lieux = lieux.filter(p =>
-                !motsExclus.some(mot => p.name.includes(mot))
-            );
+            lieux = lieux.filter(p => {
+                const n = Array.isArray(p.name) ? p.name[0] : p.name;
+                return !motsExclus.some(mot => n.includes(mot));
+            });
         } else if (panelId === "panelInsecte") {
             const motsExclus = ["mer", "oiseaux"];
-            lieux = lieux.filter(p =>
-                !motsExclus.some(mot => new RegExp(`\\b${mot}`, "i").test(p.name))
-            );
+            lieux = lieux.filter(p => {
+                const n = Array.isArray(p.name) ? p.name[0] : p.name;
+                return !motsExclus.some(mot => new RegExp(`\\b${mot}`, "i").test(n));
+            });
         }
 
         lieux.forEach(p => {
             const opt = document.createElement("option");
-            opt.value = p.name;
-            opt.textContent = p.name;
+            const nameFr = Array.isArray(p.name) ? p.name[0] : p.name;
+            opt.value = nameFr;
+            opt.textContent = nameFr;
             select.appendChild(opt);
         });
     }
@@ -653,10 +735,17 @@ function saveElement(type) {
     const panel = document.getElementById(panelId);
     const prefix = type === "oiseau" ? "oisseau" : type;
 
-    const nom = panel.querySelector(`#${prefix}Nom`).value.trim();
-    if (!nom) { alert("Nom manquant"); return; }
+    const nomFr = panel.querySelector(`#${prefix}Nom`).value.trim();
+    const nomEn = panel.querySelector(`#${prefix}NomEn`).value.trim();
+    if (!nomFr) { alert("Nom FR manquant"); return; }
 
-    const lieu = panel.querySelector(`#${prefix}Lieu`).value;
+    const lieuVal = panel.querySelector(`#${prefix}Lieu`).value;
+    // Trouver le lieu dans places pour récupérer le nom EN si disponible
+    const lieuPlace = places.find(p => (Array.isArray(p.name) ? p.name[0] : p.name) === lieuVal);
+    const lieu = lieuPlace && Array.isArray(lieuPlace.name)
+        ? [lieuPlace.name[0], lieuPlace.name[1]]
+        : lieuVal;
+
     const niveau = parseInt(panel.querySelector(`#${prefix}Niveau`).value) || 1;
 
     const allGroups = panel.querySelectorAll(".checkbox-group");
@@ -665,7 +754,8 @@ function saveElement(type) {
     const meteos = [...allGroups[1].querySelectorAll("input[type='checkbox']")]
         .filter(cb => cb.checked).map(cb => cb.value);
 
-    const element = { name: nom, lieu, heures, meteos, niveau_hobby: niveau };
+    const name = nomEn ? [nomFr, nomEn] : nomFr;
+    const element = { name, lieu, heures, meteos, niveau_hobby: niveau };
 
     if (type === "poisson") {
         poissons.push(element);
@@ -679,7 +769,8 @@ function saveElement(type) {
     }
 
     panel.querySelector(`#${prefix}Nom`).value = "";
-    alert(`${nom} sauvegardé !`);
+    panel.querySelector(`#${prefix}NomEn`).value = "";
+    alert(`${nomFr} sauvegardé !`);
 }
 
 // =========================
@@ -687,22 +778,30 @@ function saveElement(type) {
 // =========================
 
 function creerCollectible() {
-    const nom = document.getElementById("collectibleNom").value.trim();
+    const nomFr = document.getElementById("collectibleNom").value.trim();
+    const nomEn = document.getElementById("collectibleNomEn").value.trim();
     const categorieSelect = document.getElementById("collectibleCategorieSelect").value;
-    const type = categorieSelect === "__new__"
+    const typeFr = categorieSelect === "__new__"
         ? document.getElementById("collectibleType").value.trim()
         : categorieSelect;
     const color = document.getElementById("collectibleColor").value;
 
-    if (!nom) { alert("Nom manquant"); return; }
-    if (!type) { alert("Type/catégorie manquant"); return; }
+    if (!nomFr) { alert("Nom FR manquant"); return; }
+    if (!typeFr) { alert("Type/catégorie manquant"); return; }
 
-    if (collectibles.find(c => c.name === nom)) {
+    const nomExistant = collectibles.find(c => {
+        const n = Array.isArray(c.name) ? c.name[0] : c.name;
+        return n === nomFr;
+    });
+    if (nomExistant) {
         alert("Un collectible avec ce nom existe déjà.");
         return;
     }
 
-    currentCollectible = { name: nom, type, color, spawns: [] };
+    const name = nomEn ? [nomFr, nomEn] : nomFr;
+    const type = typeFr;
+
+    currentCollectible = { name, type, color, spawns: [] };
     collectibles.push(currentCollectible);
     localStorage.setItem("collectibles", JSON.stringify(collectibles));
 
@@ -710,6 +809,7 @@ function creerCollectible() {
     container.style.cursor = "crosshair";
     document.getElementById("panelCollectible").classList.add("hidden");
 }
+
 
 function placerCollectibleExistant() {
     const nom = document.getElementById("collectibleExistantSelect").value;
@@ -730,11 +830,19 @@ function placerCollectibleExistant() {
 function exportTout() {
     if (mode !== "admin") return;
     [
-        { data: places.map(p => ({ name: p.name, x: Math.round(p.x), y: Math.round(p.y), level: p.level || 1 })), filename: "lieux.json" },
+        {
+            data: places.map(p => ({
+                name: p.name,
+                x: Math.round(p.x),
+                y: Math.round(p.y),
+                level: p.level || 1
+            })),
+            filename: "lieux.json"
+        },
         { data: poissons, filename: "poissons.json" },
         { data: insectes, filename: "insectes.json" },
         { data: oiseaux, filename: "oiseaux.json" },
-        { 
+        {
             data: collectibles.map(c => ({
                 name: c.name,
                 type: c.type,
@@ -745,7 +853,7 @@ function exportTout() {
                 }))
             })),
             filename: "collectibles.json"
-        },
+        }
     ].forEach(({ data, filename }) => {
         const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
         const url = URL.createObjectURL(blob);
@@ -779,7 +887,10 @@ function importElements(event) {
                 places = data;
                 savePlaces();
                 document.querySelectorAll(".place-marker").forEach(el => el.remove());
-                places.forEach(p => createPlaceMarker(p.name, p.x, p.y, p.level || 1));
+                places.forEach(p => {
+                    const nameFr = Array.isArray(p.name) ? p.name[0] : p.name;
+                    createPlaceMarker(nameFr, p.x, p.y, p.level || 1);
+                });
             } else if (file.name === "poissons.json") {
                 poissons = data;
                 localStorage.setItem("poissons", JSON.stringify(poissons));
@@ -866,24 +977,53 @@ function afficherGroupeElements(elements, container) {
         filtres[cb.value] = cb.checked;
     });
 
+    const hobbyPoisson = parseInt(document.getElementById("hobbyPoisson").value) || null;
+    const hobbyOiseau = parseInt(document.getElementById("hobbyOiseau").value) || null;
+    const hobbyInsecte = parseInt(document.getElementById("hobbyInsecte").value) || null;
+    const afficherNonDebloques = document.getElementById("afficherNonDebloques").checked;
+
     const ul = document.createElement("ul");
     ul.className = "elements-lieu-liste";
 
     const tousElements = [
-        ...(filtres["poisson"] ? poissons.filter(p => elements.includes(p.name)).map(p => ({ name: p.name, emoji: "🐟" })) : []),
-        ...(filtres["oiseau"] ? oiseaux.filter(o => elements.includes(o.name)).map(o => ({ name: o.name, emoji: "🪶" })) : []),
-        ...(filtres["insecte"] ? insectes.filter(i => elements.includes(i.name)).map(i => ({ name: i.name, emoji: "🐛" })) : [])
+        ...(filtres["poisson"] ? poissons.filter(p => elements.includes(Array.isArray(p.name) ? p.name[0] : p.name)).map(p => ({
+            name: getNom(p),
+            emoji: "🐟",
+            niveau: p.niveau_hobby,
+            hobbyUser: hobbyPoisson
+        })) : []),
+        ...(filtres["oiseau"] ? oiseaux.filter(o => elements.includes(Array.isArray(o.name) ? o.name[0] : o.name)).map(o => ({
+            name: getNom(o),
+            emoji: "🪶",
+            niveau: o.niveau_hobby,
+            hobbyUser: hobbyOiseau
+        })) : []),
+        ...(filtres["insecte"] ? insectes.filter(i => elements.includes(Array.isArray(i.name) ? i.name[0] : i.name)).map(i => ({
+            name: getNom(i),
+            emoji: "🐛",
+            niveau: i.niveau_hobby,
+            hobbyUser: hobbyInsecte
+        })) : [])
     ];
 
     if (tousElements.length === 0) return;
 
-    tousElements.forEach(({ name, emoji }) => {
+    let auMoinsUn = false;
+    tousElements.forEach(({ name, emoji, niveau, hobbyUser }) => {
+        const debloque = hobbyUser === null || niveau <= hobbyUser;
+
+        if (!debloque && !afficherNonDebloques) return;
+
+        auMoinsUn = true;
         const li = document.createElement("li");
         li.textContent = `${emoji} ${name}`;
+        if (!debloque) {
+            li.style.color = "#555";
+        }
         ul.appendChild(li);
     });
 
-    container.appendChild(ul);
+    if (auMoinsUn) container.appendChild(ul);
 }
 
 function afficherElementsLieu(nomLieu) {
@@ -981,7 +1121,7 @@ function afficherLegende() {
         div.className = "legende-item";
         div.innerHTML = `
             <div class="legende-pastille" style="background: ${c.color || "#e67e22"}"></div>
-            <span>${c.name}</span>
+            <span>${getNom(c)}</span>
         `;
         list.appendChild(div);
     });
@@ -1004,17 +1144,21 @@ function appliquerFiltres() {
         filtres[cb.value] = cb.checked;
     });
 
-    // Collectibles markers
     document.querySelectorAll(".collectible-marker").forEach(el => {
         el.style.display = filtres["collectible"] ? "block" : "none";
     });
 
-    // Légende collectibles
     document.getElementById("legendeCollectibles").style.display = filtres["collectible"] ? "" : "none";
 
-    // Éléments dans le panneau info si un lieu est sélectionné
     if (selectedPlace) {
         afficherElementsLieu(selectedPlace);
+    }
+
+    // Rafraîchir les spéciaux si ouverts
+    const panelSpeciaux = document.getElementById("panelSpeciaux");
+    if (!panelSpeciaux.classList.contains("hidden")) {
+        toggleSpeciaux();
+        toggleSpeciaux();
     }
 }
 
@@ -1050,10 +1194,15 @@ function updateSuppressionList() {
         : type === "oiseau" ? oiseaux
         : collectibles;
 
-    [...data].sort((a, b) => a.name.localeCompare(b.name, "fr")).forEach(el => {
+    [...data].sort((a, b) => {
+        const nameA = Array.isArray(a.name) ? a.name[0] : a.name;
+        const nameB = Array.isArray(b.name) ? b.name[0] : b.name;
+        return nameA.localeCompare(nameB, "fr");
+    }).forEach(el => {
         const opt = document.createElement("option");
-        opt.value = el.name;
-        opt.textContent = el.name;
+        const nameFr = Array.isArray(el.name) ? el.name[0] : el.name;
+        opt.value = nameFr;
+        opt.textContent = nameFr;
         select.appendChild(opt);
     });
 }
@@ -1087,3 +1236,9 @@ function supprimerElement() {
     updateSuppressionList();
     alert(`"${nom}" supprimé !`);
 }
+
+["hobbyPoisson", "hobbyOiseau", "hobbyInsecte", "afficherNonDebloques"].forEach(id => {
+    document.getElementById(id).addEventListener("change", function() {
+        appliquerFiltres();
+    });
+});

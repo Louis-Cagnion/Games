@@ -14,6 +14,27 @@
     <button id="btnUser" onclick="setMode('user')">👀 Mode utilisateur</button>
     <button id="btnAdmin" onclick="setMode('admin')">🔐 Mode admin</button>
 </div>
+<div id="userPreferences">
+    <button id="btnLangue" onclick="toggleLangue()">🇫🇷 FR</button>
+    
+    <div id="hobbyPanel">
+        <div class="hobby-row">
+            <label>🐟 Pêche :</label>
+            <input type="number" id="hobbyPoisson" min="1" max="10" placeholder="—">
+        </div>
+        <div class="hobby-row">
+            <label>🪶 Ornithologie :</label>
+            <input type="number" id="hobbyOiseau" min="1" max="10" placeholder="—">
+        </div>
+        <div class="hobby-row">
+            <label>🐛 Entomologie :</label>
+            <input type="number" id="hobbyInsecte" min="1" max="10" placeholder="—">
+        </div>
+        <div class="hobby-row">
+            <label><input type="checkbox" id="afficherNonDebloques"> Afficher non débloqués</label>
+        </div>
+    </div>
+</div>
 <div id="legendeCollectibles">
     <h3>🍄 Collectibles</h3>
     <div id="legendeList"></div>
@@ -81,7 +102,8 @@
 <!-- 🐟 PANNEAU POISSONS -->
 <div id="panelPoisson" class="hidden element-panel">
     <h3>🐟 Ajouter un poisson</h3>
-    <label>Nom :<input type="text" id="poissonNom"></label>
+    <label>Nom FR :<input type="text" id="poissonNom"></label>
+    <label>Nom EN :<input type="text" id="poissonNomEn"></label>
     <label>Lieu :
         <select id="poissonLieu"></select>
     </label>
@@ -110,7 +132,8 @@
 <!-- 🐛 PANNEAU INSECTES -->
 <div id="panelInsecte" class="hidden element-panel">
     <h3>🐛 Ajouter un insecte</h3>
-    <label>Nom :<input type="text" id="insecteNom"></label>
+    <label>Nom FR :<input type="text" id="insecteNom"></label>
+    <label>Nom EN :<input type="text" id="insecteNomEn"></label>
     <label>Lieu :
         <select id="insecteLieu"></select>
     </label>
@@ -139,7 +162,8 @@
 <!-- 🪶 PANNEAU OISEAUX -->
 <div id="panelOiseau" class="hidden element-panel">
     <h3>🪶 Ajouter un oiseau</h3>
-    <label>Nom :<input type="text" id="oisseauNom"></label>
+    <label>Nom FR :<input type="text" id="oisseauNom"></label>
+    <label>Nom EN :<input type="text" id="oisseauNomEn"></label>
     <label>Lieu :
         <select id="oisseauLieu"></select>
     </label>
@@ -172,7 +196,8 @@
     <!-- Partie 1 : Nouvel élément -->
     <div class="collectible-section">
         <strong>➕ Nouvel élément</strong>
-        <label>Nom :<input type="text" id="collectibleNom"></label>
+        <label>Nom FR :<input type="text" id="collectibleNom"></label>
+        <label>Nom EN :<input type="text" id="collectibleNomEn"></label>
         <label>Catégorie :
             <select id="collectibleCategorieSelect" onchange="onCategorieSelect()">
                 <option value="__new__">➕ Nouvelle catégorie</option>

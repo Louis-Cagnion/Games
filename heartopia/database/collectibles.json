@@ -1,7 +1,13 @@
 [
   {
-    "name": ["Cèpes de Bordeaux", "Penny buns"],
-    "type": ["champignon", "mushroom"],
+    "name": [
+      "Cèpes de Bordeaux",
+      "Penny buns"
+    ],
+    "type": [
+      "champignon",
+      "mushroom"
+    ],
     "color": "#f1c40f",
     "spawns": [
       {
@@ -79,8 +85,14 @@
     ]
   },
   {
-    "name": ["Mousserons/Champignon de Paris", "Button Mushrooms"],
-    "type": ["champignon", "mushroom"],
+    "name": [
+      "Mousserons/Champignon de Paris",
+      "Button Mushrooms"
+    ],
+    "type": [
+      "champignon",
+      "mushroom"
+    ],
     "color": "#ffffff",
     "spawns": [
       {
@@ -122,8 +134,14 @@
     ]
   },
   {
-    "name": ["Shiitakes", "Shiitakes"],
-    "type": ["champignon", "mushroom"],
+    "name": [
+      "Shiitakes",
+      "Shiitakes"
+    ],
+    "type": [
+      "champignon",
+      "mushroom"
+    ],
     "color": "#a0522d",
     "spawns": [
       {
@@ -197,8 +215,14 @@
     ]
   },
   {
-    "name": ["Pleurote", "Oyster Mushrooms"],
-    "type": ["champignon", "mushroom"],
+    "name": [
+      "Pleurote",
+      "Oyster Mushrooms"
+    ],
+    "type": [
+      "champignon",
+      "mushroom"
+    ],
     "color": "#95a5a6",
     "spawns": [
       {
@@ -248,8 +272,14 @@
     ]
   },
   {
-    "name": ["Pommes", "Apples"],
-    "type": ["fruit", "fruit"],
+    "name": [
+      "Pommes",
+      "Apples"
+    ],
+    "type": [
+      "fruit",
+      "fruit"
+    ],
     "color": "#e74c3c",
     "spawns": [
       {
@@ -363,8 +393,14 @@
     ]
   },
   {
-    "name": ["Oranges", "Oranges"],
-    "type": ["fruit", "fruit"],
+    "name": [
+      "Oranges",
+      "Oranges"
+    ],
+    "type": [
+      "fruit",
+      "fruit"
+    ],
     "color": "#e67e22",
     "spawns": [
       {
@@ -474,8 +510,14 @@
     ]
   },
   {
-    "name": ["Framboises", "Raspberrys"],
-    "type": ["fruit", "fruit"],
+    "name": [
+      "Framboises",
+      "Raspberrys"
+    ],
+    "type": [
+      "fruit",
+      "fruit"
+    ],
     "color": "#ff69b4",
     "spawns": [
       {
@@ -553,8 +595,14 @@
     ]
   },
   {
-    "name": ["Myrtilles", "Blueberrys"],
-    "type": ["fruit", "fruit"],
+    "name": [
+      "Myrtilles",
+      "Blueberrys"
+    ],
+    "type": [
+      "fruit",
+      "fruit"
+    ],
     "color": "#2e4db0",
     "spawns": [
       {
@@ -844,8 +892,14 @@
     ]
   },
   {
-    "name": ["Truffes", "Truffles"],
-    "type": ["champignon", "mushroom"],
+    "name": [
+      "Truffes",
+      "Truffles"
+    ],
+    "type": [
+      "champignon",
+      "mushroom"
+    ],
     "color": "#000000",
     "spawns": [
       {
