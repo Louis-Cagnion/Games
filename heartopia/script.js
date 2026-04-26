@@ -8,6 +8,72 @@ let panY = 0;
 let isPanning = false;
 let panStartX = 0;
 let panStartY = 0;
+let langue = "fr";
+const traductionsHeures = {
+    "matin": "dawn",
+    "après-midi": "day",
+    "soir": "dusk",
+    "nuit": "night"
+};
+
+const traductionsMeteos = {
+    "soleil": "sunny",
+    "pluie": "rainy",
+    "arc-en-ciel": "rainbow"
+};
+
+const generiquesEN = {
+    "Lacs": "Lakes",
+    "Rivières": "Rivers",
+    "Mers": "Seas",
+    "Foyer": "Home",
+    "Bord de l'eau": "Waterside",
+    "Au sommet de la tête de Blanc": "At the Top of Blanc's Head",
+    "Attracteur d'insectes": "Insect Lure"
+};
+
+const UI = {
+    fr: {
+        modeUser: "👀 Mode utilisateur",
+        modeAdmin: "🔐 Mode admin",
+        niveauPassion: "Niveau de passion",
+        peche: "🐟 Pêche",
+        observation: "🪶 Observation des oiseaux",
+        attrapage: "🐛 Attrapage d'insectes",
+        afficherNonDebloques: "Afficher non débloqués",
+        aucunLieu: "Aucun lieu sélectionné",
+        speciaux: "⭐ Spéciaux",
+        panelSpeciaux: "⭐ Éléments spéciaux",
+        aucunElement: "Aucun élément répertorié",
+        filtrePoissons: "Poissons",
+        filtreOiseaux: "Oiseaux",
+        filtreInsectes: "Insectes",
+        filtreCollectibles: "Collectibles",
+        legendeTitre: "🍄 Collectibles"
+    },
+    en: {
+        modeUser: "👀 User mode",
+        modeAdmin: "🔐 Admin mode",
+        niveauPassion: "Hobby level",
+        peche: "🐟 Fishing",
+        observation: "🪶 Birdwatching",
+        attrapage: "🐛 Insect catching",
+        afficherNonDebloques: "Show locked",
+        aucunLieu: "No location selected",
+        speciaux: "⭐ Specials",
+        panelSpeciaux: "⭐ Special elements",
+        aucunElement: "No elements found",
+        filtrePoissons: "Fish",
+        filtreOiseaux: "Birds",
+        filtreInsectes: "Insects",
+        filtreCollectibles: "Collectibles",
+        legendeTitre: "🍄 Collectibles"
+    }
+};
+
+function t(key) {
+    return UI[langue][key] || key;
+}
 
 const inner = document.getElementById("map-inner");
 const container = document.getElementById("map-container");
@@ -63,6 +129,7 @@ function setMode(newMode) {
     document.getElementById("elementsPanel").classList.add("hidden");
     document.getElementById("btnSpeciaux").classList.add("hidden");
     updateModeButtons();
+    mettreAJourUI();
 }
 
 function updateModeButtons() {
@@ -81,19 +148,54 @@ function savePlaces() {
 }
 
 // =========================
-// 🌍 LANGUE
+// Heures
 // =========================
 
-let langue = "fr";
+function traduireHeure(h) {
+    return langue === "fr" ? h : (traductionsHeures[h] || h);
+}
+
+function traduireMeteo(m) {
+    return langue === "fr" ? m : (traductionsMeteos[m] || m);
+}
+
+// =========================
+// 🌍 LANGUE
+// =========================
 
 function toggleLangue() {
     langue = langue === "fr" ? "en" : "fr";
     document.getElementById("btnLangue").textContent = langue === "fr" ? "🇫🇷 FR" : "🇬🇧 EN";
-    // Mettre à jour le titre du panneau
-    if (!selectedPlace) {
-        document.getElementById("placeTitle").textContent = langue === "fr" ? "Aucun lieu sélectionné" : "No location selected";
-    }
+    mettreAJourUI();
     rafraichirAffichage();
+}
+
+function mettreAJourUI() {
+    document.getElementById("btnUser").textContent = t("modeUser");
+    document.getElementById("btnAdmin").textContent = t("modeAdmin");
+    document.getElementById("labelNiveauPassion").textContent = t("niveauPassion");
+    document.getElementById("labelPeche").textContent = t("peche");
+    document.getElementById("labelObservation").textContent = t("observation");
+    document.getElementById("labelAttrapage").textContent = t("attrapage");
+    document.getElementById("labelAfficherNonDebloques").textContent = t("afficherNonDebloques");
+    document.getElementById("btnSpeciaux").textContent = t("speciaux");
+    document.getElementById("panelSpeciauxTitre").textContent = t("panelSpeciaux");
+    document.getElementById("legendeCollectiblesTitre").textContent = t("legendeTitre");
+    document.getElementById("labelFiltrePoissons").textContent = t("filtrePoissons");
+    document.getElementById("labelFiltreOiseaux").textContent = t("filtreOiseaux");
+    document.getElementById("labelFiltreInsectes").textContent = t("filtreInsectes");
+    document.getElementById("labelFiltreCollectibles").textContent = t("filtreCollectibles");
+    document.getElementById("titrePage").textContent = langue === "fr" ? "🗺️ Carte Heartopia" : "🗺️ Heartopia Map";
+    if (!selectedPlace) {
+        document.getElementById("placeTitle").textContent = t("aucunLieu");
+    }
+}
+
+function getNomLieu(nomFr) {
+    if (langue === "fr") return nomFr;
+    const place = places.find(p => (Array.isArray(p.name) ? p.name[0] : p.name) === nomFr);
+    if (place && Array.isArray(place.name)) return place.name[1];
+    return generiquesEN[nomFr] || nomFr;
 }
 
 function getNom(element) {
@@ -128,6 +230,9 @@ function rafraichirAffichage() {
 
     // Mettre à jour le panneau info si un lieu est sélectionné
     if (selectedPlace) {
+        const place = places.find(p => (Array.isArray(p.name) ? p.name[0] : p.name) === selectedPlace);
+        const title = document.getElementById("placeTitle");
+        if (title && place) title.textContent = getNom(place);
         afficherElementsLieu(selectedPlace);
     }
 
@@ -274,12 +379,12 @@ container.addEventListener("click", function(e) {
     if (mode !== "admin") return;
     if (e.target.classList.contains("marker")) return;
 
+    const name = prompt("Nom du lieu ?");
+    if (!name) return;
+
     const rect = container.getBoundingClientRect();
     const x = ((e.clientX - rect.left - panX) / (rect.width * zoom)) * 100;
     const y = ((e.clientY - rect.top - panY) / (rect.height * zoom)) * 100;
-
-    const name = prompt("Nom du lieu ?");
-    if (!name) return;
 
     const levelStr = prompt("Niveau (1 ou 2) ?");
     const level = parseInt(levelStr) === 2 ? 2 : 1;
@@ -396,14 +501,13 @@ function createPlaceMarker(name, x, y, level = 1) {
         e.stopPropagation();
         selectedPlace = name;
         const title = document.getElementById("placeTitle");
-        if (title) title.textContent = name;
-
-        // Afficher les éléments
+        if (title) {
+            const place = places.find(p => (Array.isArray(p.name) ? p.name[0] : p.name) === name);
+            title.textContent = place ? getNom(place) : name;
+        }
         const elementsPanel = document.getElementById("elementsPanel");
         elementsPanel.classList.remove("hidden");
         afficherElementsLieu(name);
-
-        // Afficher le bouton spéciaux
         document.getElementById("btnSpeciaux").classList.remove("hidden");
     };
 
@@ -451,7 +555,14 @@ collectibles.forEach(c => {
         createCollectibleMarker(s.x, s.y, c.type, c.name, i, c.color || "#e67e22");
     });
 });
-setTimeout(() => { applyTransform(); updateMarkerVisibility(); repositionLabels(); clampLabels(); afficherLegende(); }, 100);
+setTimeout(() => { 
+    applyTransform(); 
+    updateMarkerVisibility(); 
+    repositionLabels(); 
+    clampLabels(); 
+    afficherLegende();
+    mettreAJourUI();
+}, 100);
 
 // =========================
 // 📤 EXPORT LIEUX
@@ -1032,11 +1143,10 @@ function afficherElementsLieu(nomLieu) {
     list.innerHTML = "";
 
     if (Object.keys(resultats).length === 0) {
-        list.innerHTML = "<div style='color:#666;font-size:14px'>Aucun élément répertorié</div>";
+        list.innerHTML = `<div style='color:#666;font-size:14px'>${langue === "fr" ? "Aucun élément répertorié" : "No elements found"}</div>`;
         return;
     }
 
-    // Éléments du lieu lui-même
     const lieuxPropres = getLieuxPourRecherche(nomLieu);
     let premierLieu = true;
     lieuxPropres.forEach(lieu => {
@@ -1044,7 +1154,7 @@ function afficherElementsLieu(nomLieu) {
             const div = document.createElement("div");
             div.className = "elements-lieu";
             if (!premierLieu) {
-                div.innerHTML = `<div class="elements-lieu-titre">${lieu} :</div>`;
+                div.innerHTML = `<div class="elements-lieu-titre">${getNomLieu(lieu)} :</div>`;
             }
             premierLieu = false;
             afficherGroupeElements(resultats[lieu], div);
@@ -1052,23 +1162,21 @@ function afficherElementsLieu(nomLieu) {
         }
     });
 
-    // Sous-zones si zone niv1
     if (estZoneNiv1) {
         sousZones.forEach(sz => {
             if (resultats[sz]) {
                 const div = document.createElement("div");
                 div.className = "elements-lieu";
-                div.innerHTML = `<div class="elements-lieu-titre">${sz} :</div>`;
+                div.innerHTML = `<div class="elements-lieu-titre">${getNomLieu(sz)} :</div>`;
                 afficherGroupeElements(resultats[sz], div);
                 list.appendChild(div);
             }
-            // Génériques de la sous-zone (ex: lac dans une sous-zone)
             const lieuxSZ = getLieuxPourRecherche(sz);
             lieuxSZ.forEach(lieu => {
                 if (lieu !== sz && resultats[lieu]) {
                     const div = document.createElement("div");
                     div.className = "elements-lieu";
-                    div.innerHTML = `<div class="elements-lieu-titre">${sz} (${lieu}) :</div>`;
+                    div.innerHTML = `<div class="elements-lieu-titre">${getNomLieu(sz)} (${getNomLieu(lieu)}) :</div>`;
                     afficherGroupeElements(resultats[lieu], div);
                     list.appendChild(div);
                 }
@@ -1087,15 +1195,24 @@ function toggleSpeciaux() {
 
         lieuxSpeciaux.forEach(lieu => {
             const elements = [
-                ...poissons.filter(p => p.lieu === lieu).map(p => p.name),
-                ...oiseaux.filter(o => o.lieu === lieu).map(o => o.name),
-                ...insectes.filter(i => i.lieu === lieu).map(i => i.name)
+                ...poissons.filter(p => {
+                    const lieuFr = Array.isArray(p.lieu) ? p.lieu[0] : p.lieu;
+                    return lieuFr === lieu;
+                }).map(p => Array.isArray(p.name) ? p.name[0] : p.name),
+                ...oiseaux.filter(o => {
+                    const lieuFr = Array.isArray(o.lieu) ? o.lieu[0] : o.lieu;
+                    return lieuFr === lieu;
+                }).map(o => Array.isArray(o.name) ? o.name[0] : o.name),
+                ...insectes.filter(i => {
+                    const lieuFr = Array.isArray(i.lieu) ? i.lieu[0] : i.lieu;
+                    return lieuFr === lieu;
+                }).map(i => Array.isArray(i.name) ? i.name[0] : i.name)
             ];
 
             if (elements.length > 0) {
                 const div = document.createElement("div");
                 div.className = "elements-lieu";
-                div.innerHTML = `<div class="elements-lieu-titre">${lieu} :</div>`;
+                div.innerHTML = `<div class="elements-lieu-titre">${getNomLieu(lieu)} :</div>`;
                 afficherGroupeElements(elements, div);
                 list.appendChild(div);
             }

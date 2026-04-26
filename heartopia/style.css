@@ -405,7 +405,7 @@ button {
     border-radius: 8px;
     color: white;
     z-index: 100;
-    font-size: 16px;
+    font-size: var(--ui-font-size);
 }
 
 #btnLangue {
@@ -417,7 +417,7 @@ button {
     background: #333;
     color: white;
     cursor: pointer;
-    font-size: 16px;
+    font-size: var(--ui-font-size);
 }
 
 #btnLangue:hover {
@@ -449,4 +449,62 @@ button {
 .hobby-row label {
     min-width: 140px;
     font-size: var(--ui-font-size);
+}
+
+#userPreferences {
+    position: fixed;
+    left: 20px;
+    top: 20px;
+    background: #111;
+    padding: 10px;
+    border-radius: 8px;
+    color: white;
+    z-index: 100;
+    font-size: var(--ui-font-size);
+    min-width: 220px;
+}
+
+#labelNiveauPassion {
+    font-size: var(--ui-font-size);
+    font-weight: bold;
+    margin-bottom: 8px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid #333;
+}
+
+#hobbyPanel {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.hobby-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+}
+
+.hobby-row label {
+    font-size: var(--ui-font-size);
+    text-align: left;
+    flex: 1;
+}
+
+.hobby-row input[type="number"] {
+    width: 60px;
+    background: #222;
+    border: 1px solid #555;
+    color: white;
+    padding: 6px;
+    border-radius: 4px;
+    font-size: var(--ui-font-size);
+    text-align: center;
+    flex-shrink: 0;
+}
+
+.hobby-separator {
+    border: none;
+    border-top: 1px solid #333;
+    margin: 6px 0;
 }
