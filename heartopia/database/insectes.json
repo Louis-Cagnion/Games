@@ -57,5 +57,6 @@
   { "name": ["Pioche arc-en-ciel", "Rainbow stag beetle"], "lieu": ["Événement : attirer les insectes hors de leur trou", "Event: Lure Insects Out"], "heures": ["matin", "apres-midi", "soir", "nuit"], "meteos": ["soleil", "pluie", "arc-en-ciel"], "niveau_hobby": 1 },
   { "name": ["Mante à tête conique", "Conehead mantis"], "lieu": ["Ruines", "Ruins"], "heures": ["apres-midi", "soir"], "meteos": ["pluie", "arc-en-ciel"], "niveau_hobby": 1 },
   { "name": ["Papillon bleu céleste", "Morpho Helena"], "lieu": ["Plage violette", "Violet Beach"], "heures": ["matin", "apres-midi"], "meteos": ["arc-en-ciel"], "niveau_hobby": 1 },
-  { "name": ["Scarabée Hercule", "Hercules beetle"], "lieu": ["Lac volcanique", "Volcanic Lake"], "heures": ["apres-midi", "soir"], "meteos": ["soleil", "arc-en-ciel"], "niveau_hobby": 1 }
+  { "name": ["Scarabée Hercule", "Hercules beetle"], "lieu": ["Lac volcanique", "Volcanic Lake"], "heures": ["apres-midi", "soir"], "meteos": ["soleil", "arc-en-ciel"], "niveau_hobby": 1 },
+  { "name": ["Lucane dorée spectral", "Golden stag beetle"], "lieu": ["Forêt de chênes spirituels", "Spiritual Oak Forest"], "heures": ["soir", "nuit"], "meteos": ["pluie", "arc-en-ciel"], "niveau_hobby": 9 }
 ]
